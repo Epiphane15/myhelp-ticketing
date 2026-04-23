@@ -28,10 +28,11 @@ class TicketMessageController extends Controller
         $user = Auth::user();
         if ($user->role === 'agent' || $user->role === 'admin') {
             $ticket->update(['status' => 'en_attente']); // waiting for client
+            \Illuminate\Support\Facades\Notification::send($ticket->user, new \App\Notifications\TicketRepliedNotification($ticket));
         } else {
             $ticket->update(['status' => 'en_cours']); // client replied
         }
 
-        return back()->with('success', 'Message envoyé.');
+        return back()->with('success', 'Message envoyé. Le demandeur a été notifié.');
     }
 }

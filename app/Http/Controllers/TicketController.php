@@ -13,22 +13,32 @@ class TicketController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
-        if ($user->role === 'admin') {
-            $tickets = Ticket::with(['user', 'agent', 'priority'])->latest()->get();
-        } elseif ($user->role === 'agent') {
-            $tickets = Ticket::with(['user', 'agent', 'priority'])
-                ->where('agent_id', $user->id)
-                ->orWhereNull('agent_id')
-                ->latest()->get();
-        } else {
-            $tickets = Ticket::with(['agent', 'priority'])
-                ->where('user_id', $user->id)
-                ->latest()->get();
+        $query = Ticket::with(['user', 'agent', 'priority'])->latest();
+
+        if ($user->role === 'agent') {
+            $query->where(function($q) use ($user) {
+                $q->where('agent_id', $user->id)->orWhereNull('agent_id');
+            });
+        } elseif ($user->role === 'client') {
+            $query->where('user_id', $user->id);
         }
-        return view('tickets.index', compact('tickets'));
+
+        // Filters for internal staff
+        if ($user->role !== 'client') {
+            if ($request->filled('priority_id')) {
+                $query->where('priority_id', $request->input('priority_id'));
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+        }
+
+        $tickets = $query->get();
+        $priorities = Priority::all();
+        return view('tickets.index', compact('tickets', 'priorities'));
     }
 
     public function create()
@@ -78,8 +88,8 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         $this->authorize('delete', $ticket);
-        $ticket->delete();
-        return redirect()->route('tickets.index')->with('success', 'Ticket supprimé.');
+        $ticket->update(['is_active' => false]);
+        return redirect()->route('tickets.index')->with('success', 'Ticket supprimé (Archivé).');
     }
 
     public function assign(Request $request, Ticket $ticket)
@@ -99,6 +109,9 @@ class TicketController extends Controller
     {
         $this->authorize('update', $ticket);
         $ticket->update(['status' => 'resolu']);
-        return back()->with('success', 'Ticket fermé avec succès.');
+        
+        \Illuminate\Support\Facades\Notification::send($ticket->user, new \App\Notifications\TicketResolvedNotification($ticket));
+        
+        return back()->with('success', 'Ticket fermé avec succès et le client a été notifié.');
     }
 }

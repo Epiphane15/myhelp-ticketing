@@ -20,9 +20,9 @@ class CheckSla extends Command
     {
         $now = Carbon::now();
         // 1h30
-        $warningLimit = $now->copy()->subMinutes(90);
+        $warningLimit = $now->copy()->subMinutes(3);
         // 2h00
-        $breachLimit = $now->copy()->subHours(2);
+        $breachLimit = $now->copy()->subMinutes(5);
         
         $admins = User::where('role', 'admin')->get();
 

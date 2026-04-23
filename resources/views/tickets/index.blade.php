@@ -1,6 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Auto-refresh silencieux toutes les 30 secondes pour mettre à jour les disparitions automatiquement -->
+<script>
+    setTimeout(function() {
+        window.location.reload();
+    }, 30000);
+</script>
+
 <div class="container">
     <div class="row mb-5 align-items-center animate-fade-in-up">
         <div class="col-md-8">
@@ -21,6 +28,36 @@
             @endcan
         </div>
     </div>
+
+    @if(auth()->user()->role !== 'client')
+        <div class="card shadow-sm border-0 mb-4 animate-fade-in-up">
+            <div class="card-body">
+                <form action="{{ route('tickets.index') }}" method="GET" class="row gx-3 gy-2 align-items-center">
+                    <div class="col-md-4">
+                        <select class="form-select form-select-lg" id="priority_id" name="priority_id">
+                            <option value="">Toutes les priorités</option>
+                            @foreach($priorities as $priority)
+                                <option value="{{ $priority->id }}" {{ request('priority_id') == $priority->id ? 'selected' : '' }}>{{ $priority->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select form-select-lg" id="status" name="status">
+                            <option value="">Tous les statuts</option>
+                            <option value="ouvert" {{ request('status') == 'ouvert' ? 'selected' : '' }}>Ouvert</option>
+                            <option value="assigne" {{ request('status') == 'assigne' ? 'selected' : '' }}>Assigné</option>
+                            <option value="en_cours" {{ request('status') == 'en_cours' ? 'selected' : '' }}>En cours</option>
+                            <option value="en_attente" {{ request('status') == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                            <option value="resolu" {{ request('status') == 'resolu' ? 'selected' : '' }}>Résolu</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">Filtrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 
     @if(session('success'))
         <div class="alert alert-success animate-fade-in-up delay-1 border-0 shadow-sm rounded-3">
@@ -86,7 +123,15 @@
                                 </td>
                                 <td class="text-muted small">{{ $ticket->created_at->format('d M Y') }}</td>
                                 <td class="pe-4 text-end">
-                                    <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-sm btn-light text-primary fw-semibold px-3 rounded-pill hover-lift">Ouvrir ➔</a>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-sm btn-light text-primary fw-semibold px-3 rounded-pill hover-lift">Ouvrir ➔</a>
+                                        @if($ticket->status === 'resolu')
+                                            <form action="{{ route('tickets.destroy', $ticket) }}" method="POST">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger px-3 rounded-pill hover-lift" onclick="return confirm('Confirmer la suppression ? Cela cachera ce ticket de votre interface.')">Supprimer</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

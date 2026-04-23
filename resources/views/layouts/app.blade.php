@@ -41,6 +41,42 @@
                                 </li>
                             @endif
                         @else
+                            @php
+                                $unread = Auth::user()->unreadNotifications;
+                            @endphp
+                            <li class="nav-item dropdown me-2">
+                                <a id="notifDropdown" class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    🔔
+                                    @if($unread->count() > 0)
+                                        <span class="position-absolute top-10 start-80 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                            {{ $unread->count() }}
+                                        </span>
+                                    @endif
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0 rounded-3" aria-labelledby="notifDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                    <div class="dropdown-header bg-light border-bottom d-flex justify-content-between align-items-center py-2">
+                                        <strong class="text-dark">Notifications</strong>
+                                        @if($unread->count() > 0)
+                                            <a href="{{ route('notifications.read') }}" class="text-primary text-decoration-none small fw-medium">Tout lire</a>
+                                        @endif
+                                    </div>
+                                    @forelse(Auth::user()->notifications()->take(5)->get() as $notification)
+                                        <div class="dropdown-item border-bottom p-3 {{ $notification->read_at ? 'bg-light text-muted opacity-75' : 'bg-white' }}" style="white-space: normal;">
+                                            <strong class="d-block text-dark" style="font-size: 0.9rem;">{{ $notification->data['title'] ?? 'Alerte' }}</strong>
+                                            <span class="d-block mt-1 text-secondary" style="font-size: 0.85rem;">{{ $notification->data['message'] ?? '' }}</span>
+                                            <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">🕒 {{ $notification->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    @empty
+                                        <div class="dropdown-item text-center text-muted p-4">
+                                            Aucune notification pour le moment. ☕
+                                        </div>
+                                    @endforelse
+                                    <a href="{{ route('notifications.index') }}" class="dropdown-item text-center text-primary fw-semibold border-top py-2 bg-light">
+                                        Voir toutes les notifications
+                                    </a>
+                                </div>
+                            </li>
+
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     <span class="badge bg-primary text-white me-1">{{ ucfirst(Auth::user()->role) }}</span>
