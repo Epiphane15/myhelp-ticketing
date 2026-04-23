@@ -8,6 +8,13 @@ class Ticket extends Model
 {
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            $builder->where('is_active', true);
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

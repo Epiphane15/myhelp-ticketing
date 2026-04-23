@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class SlaBreachedNotification extends Notification implements ShouldQueue
+class SlaWarningNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -27,8 +27,8 @@ class SlaBreachedNotification extends Notification implements ShouldQueue
     {
         return [
             'ticket_id' => $this->ticket->id,
-            'title' => 'Ticket Supprimé (Délai SLA Dépassé)',
-            'message' => 'Alerte: Un ticket est resté sans réponse pendant 2h et vient d\'être écarté du système.'
+            'title' => 'Attention SLA: Plus que 30 min !',
+            'message' => 'Le ticket #' . $this->ticket->id . ' sera supprimé d\'ici 30 minutes s\'il n\'est pas traité.'
         ];
     }
 }
